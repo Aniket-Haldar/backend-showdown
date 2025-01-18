@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with TaxGPT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #chat-container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .message {
+      margin-bottom: 12px;
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message.user strong {
+      color: #007bff;
+    }
+
+    .message.model strong {
+      color: #28a745;
+    }
+
+    .message div {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 16px;
+    }
+
+    .message.user div {
+      background: #e8f4ff;
+      color: #007bff;
+    }
+
+    .message.model div {
+      background: #e6f8ec;
+      color: #28a745;
+    }
+
+    #input-container {
+      display: flex;
+      padding: 8px;
+      background: #f4f4f9;
+    }
+
+    #userMessage {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    #userMessage:focus {
+      border-color: #007bff;
+    }
+
+    button {
+      margin-left: 8px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div id="input-container">
+      <input type="text" id="userMessage" placeholder="Type your message here..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  <script>
+    async function sendMessage() {
+      const userMessage = document.getElementById("userMessage").value.trim();
+      if (!userMessage) {
+        alert("Please enter a message.");
+        return;
+      }
+
+      const messagesDiv = document.getElementById("messages");
+
+      // Display user message
+      messagesDiv.innerHTML += `<div class="message user"><strong>You:</strong> <div>${userMessage}</div></div>`;
+
+      try {
+        // Send request to the server
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: userMessage }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check if the response contains the 'response' property and handle accordingly
+        if (data && data.response) {
+          messagesDiv.innerHTML += `<div class="message model"><strong>TaxGPT:</strong> <div>${data.response}</div></div>`;
+        } else {
+          messagesDiv.innerHTML += `<div class="message model"><strong>TaxGPT:</strong> <div>Sorry, something went wrong!</div></div>`;
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        messagesDiv.innerHTML += `<div class="message model"><strong>TaxGPT:</strong> <div>An error occurred. Please try again later.</div></div>`;
+      }
+
+      // Clear the input box and scroll to the latest message
+      document.getElementById("userMessage").value = "";
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  </script>
+</body>
+</html>
